@@ -48,20 +48,22 @@ def mutacion(ruta, tasa):
 
 def algoritmo_genetico(
     matriz,
-    inicio,
-    fin,
     generaciones=200,
     tam_poblacion=50,
-    tasa_mutacion=0.1
+    tasa_mutacion=0.1,
+    inicio=0,
+    fin=0
 ):
     n = len(matriz)
     poblacion = poblacion_inicial(tam_poblacion, n, inicio, fin)
+
     mejor_ruta = None
     mejor_distancia = float("inf")
     historial = []
 
     for _ in range(generaciones):
         nueva_poblacion = []
+
         for _ in range(tam_poblacion):
             p1 = seleccion_torneo(poblacion, matriz, inicio, fin)
             p2 = seleccion_torneo(poblacion, matriz, inicio, fin)
@@ -70,10 +72,12 @@ def algoritmo_genetico(
             nueva_poblacion.append(hijo)
 
         poblacion = nueva_poblacion
+
         mejor_actual = min(
             poblacion,
             key=lambda r: distancia_total(r, matriz, inicio, fin)
         )
+
         dist = distancia_total(mejor_actual, matriz, inicio, fin)
         historial.append(dist)
 
@@ -81,6 +85,11 @@ def algoritmo_genetico(
             mejor_distancia = dist
             mejor_ruta = mejor_actual
 
-    return mejor_ruta, mejor_distancia, historial
+    # 🔥 AQUÍ SE CONSTRUYE LA RUTA FINAL
+    ruta_completa = [inicio] + mejor_ruta + [fin]
+
+    return ruta_completa, mejor_distancia, historial
+
+
 
 
