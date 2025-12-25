@@ -3,61 +3,48 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 from algoritmo_genetico import algoritmo_genetico
+from entrada import matriz_distancias
 
 st.set_page_config(page_title="Sistema Inteligente de Rutas", layout="centered")
 
 st.title("🚚 Sistema Inteligente de Optimización de Rutas")
-st.write("Optimización de rutas usando Algoritmos Genéticos")
 
-# Subida de dataset
-archivo = st.file_uploader("📂 Suba el archivo CSV", type=["csv"])
+# Cargar dataset
+archivo = st.file_uploader("Sube el archivo CSV", type=["csv"])
 
-if archivo:
+if archivo is not None:
     df = pd.read_csv(archivo)
-    st.write("📊 Dataset cargado:")
-    st.dataframe(df)
+    coordenadas = df[['x', 'y']].values
+    nombres = df['ciudad'].values
 
-    nombres = df["ciudad"].tolist()
-    coordenadas = df[["x", "y"]].values
+    matriz = matriz_distancias(coordenadas)
 
-    # Selección de inicio y fin
-    inicio = st.selectbox("📍 Punto de inicio", nombres)
-    fin = st.selectbox("🏁 Punto final", nombres)
+    if st.button("Calcular mejor ruta"):
+        ruta, distancia, historial = algoritmo_genetico(matriz)
 
-    # Parámetros
-    poblacion = st.slider("👥 Tamaño de población", 20, 200, 50)
-    generaciones = st.slider("🔁 Generaciones", 50, 500, 200)
-    mutacion = st.slider("🧬 Tasa de mutación", 0.01, 0.5, 0.1)
+        st.subheader("📍 Ruta óptima")
+        ruta_completa = ruta + [ruta[0]]
 
-    if st.button("▶ Ejecutar sistema"):
-        ruta, distancia, historial = algoritmo_genetico(
-            coordenadas,
-            nombres.index(inicio),
-            nombres.index(fin),
-            generaciones,
-            poblacion,
-            mutacion
-        )
+        ruta_texto = " → ".join([nombres[i] for i in ruta_completa])
+        st.write(ruta_texto)
+        st.success(f"Distancia total: {distancia:.2f}")
 
-        st.success(f"✅ Distancia total: {distancia:.2f}")
-
-        # Mostrar ruta
-        ruta_nombres = [nombres[i] for i in ruta]
-        st.write("➡ Ruta óptima:")
-        st.write(" → ".join(ruta_nombres))
-
-        # Gráfica
+        # Gráfica de la ruta
         fig, ax = plt.subplots()
-        for i in range(len(ruta)):
-            x, y = coordenadas[ruta[i]]
-            ax.scatter(x, y)
-            ax.text(x+1, y+1, f"{i}")
+        x = [coordenadas[i][0] for i in ruta_completa]
+        y = [coordenadas[i][1] for i in ruta_completa]
 
-        x = [coordenadas[i][0] for i in ruta]
-        y = [coordenadas[i][1] for i in ruta]
         ax.plot(x, y, marker="o")
+        for i in ruta:
+            ax.text(coordenadas[i][0], coordenadas[i][1], str(i), fontsize=9)
 
+        ax.set_title("Ruta Optimizada")
         st.pyplot(fig)
 
-        # Fitness
-        st.line_chart(historial)
+        # Gráfica evolución
+        fig2, ax2 = plt.subplots()
+        ax2.plot(historial)
+        ax2.set_title("Evolución de la distancia")
+        ax2.set_xlabel("Generaciones")
+        ax2.set_ylabel("Distancia")
+        st.pyplot(fig2)
